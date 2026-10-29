@@ -3,6 +3,7 @@ package app
 import (
 	"net/http"
 
+	"github.com/TiB-Software/go-commons/commonsmodels"
 	commonsutils "github.com/TiB-Software/go-commons/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -24,6 +25,9 @@ func (a *App) RegisterRoutes() {
 
 	api := a.Router.Group("/api/v1")
 	api.GET("/healthcheck", func(c *gin.Context) {
-		c.Status(http.StatusOK)
+		commonsutils.SendResponse(c, commonsmodels.NewResponseSuccess(), http.StatusOK)
 	})
+	api.GET("/parliamentarians/right-wing", a.Parliamentarians.ListRightWing())
+	api.GET("/parliamentarians/right-wing/camara", a.Parliamentarians.ListRightWingCamara())
+	api.GET("/parliamentarians/right-wing/senado", a.Parliamentarians.ListRightWingSenado())
 }

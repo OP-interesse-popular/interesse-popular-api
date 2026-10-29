@@ -14,6 +14,7 @@ type Config struct {
 	AppEnv             string
 	CORSAllowedOrigins []string
 	Port               string
+	RedisURL           string
 	TrustedProxies     []string
 }
 
@@ -22,6 +23,7 @@ func Load() Config {
 		AppEnv:             envOrDefault("APP_ENV", EnvironmentDevelopment),
 		CORSAllowedOrigins: splitList(envOrDefault("CORS_ALLOWED_ORIGINS", "http://localhost:3000")),
 		Port:               envOrDefault("PORT", "3000"),
+		RedisURL:           required("REDIS_URL"),
 		TrustedProxies:     splitList(envOrDefault("TRUSTED_PROXIES", "127.0.0.1,::1")),
 	}
 }
@@ -35,6 +37,14 @@ func envOrDefault(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func required(key string) string {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		panic(key + "_ENV_NOT_SET")
+	}
+	return value
 }
 
 func splitList(value string) []string {

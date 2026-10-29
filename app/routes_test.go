@@ -14,6 +14,7 @@ func TestHealthcheck(t *testing.T) {
 	router := gin.New()
 	application := New(router, config.Config{
 		CORSAllowedOrigins: []string{"http://localhost:3000"},
+		RedisURL:           "redis://localhost:6379/0",
 		TrustedProxies:     []string{"127.0.0.1", "::1"},
 	})
 	application.RegisterRoutes()

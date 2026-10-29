@@ -6,6 +6,7 @@ import (
 
 	"github.com/OP-interesse-popular/interesse-popular-api/app"
 	"github.com/OP-interesse-popular/interesse-popular-api/config"
+	"github.com/OP-interesse-popular/interesse-popular-api/middlewares"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -16,7 +17,9 @@ func main() {
 	}
 
 	cfg := config.Load()
-	router := gin.Default()
+	middlewares.ConfigureLogger()
+	router := gin.New()
+	router.Use(middlewares.RequestID(), middlewares.SanitizedLogger(), middlewares.SanitizedRecovery())
 	if err := router.SetTrustedProxies(cfg.TrustedProxies); err != nil {
 		panic(err)
 	}
