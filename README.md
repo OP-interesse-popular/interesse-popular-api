@@ -21,21 +21,24 @@ O endpoint responde `200 OK` sem corpo.
 
 ## Parlamentares
 
-`GET /api/v1/parliamentarians/right-wing` lê o Redis e retorna parlamentares em
-exercício cujos partidos possuem classificação ativa de `direita` liberal ou extrema.
-A API pública não acessa PostgreSQL, fontes legislativas ou a API interna: a API de
-classificação monta e atualiza o cache previamente.
-Aceita `page` e `limit`, conforme o `go-commons`; por exemplo:
-`/api/v1/parliamentarians/right-wing?page=2&limit=20`.
+As rotas de parlamentares leem o Redis. A API pública não acessa PostgreSQL, fontes
+legislativas ou a API interna: a API de classificação monta e atualiza o cache
+previamente. Deputados aceitam `page` e `limit`; por exemplo:
+`/api/v1/parliamentarians/deputies?page=2&limit=20`.
 Use `party` para limitar a uma ou mais siglas: 
-`/api/v1/parliamentarians/right-wing/camara?party=PL,NOVO&page=1&limit=20`.
+`/api/v1/parliamentarians/deputies?party=PL,NOVO&page=1&limit=20`.
 Também aceita parâmetros repetidos: `?party=PL&party=NOVO`.
 Use `state` para filtrar uma ou mais UFs: `?state=SP,RJ` ou `?state=SP&state=RJ`.
+Use `direction` para `esquerda` ou `direita`, e `ideology` para uma ou mais
+ideologias, por exemplo: `?direction=direita&ideology=direita_liberal,extrema_direita`.
 
 Também há rotas separadas por casa legislativa:
 
-- `GET /api/v1/parliamentarians/right-wing/camara`
-- `GET /api/v1/parliamentarians/right-wing/senado`
+- `GET /api/v1/parliamentarians/deputies`
+- `GET /api/v1/parliamentarians/senators`
+
+Deputados retornam uma resposta paginada. Senadores retornam todos os itens em uma
+única lista (`items` e `total`), pois a casa tem quantidade fixa e pequena de vagas.
 
 ## Logs
 

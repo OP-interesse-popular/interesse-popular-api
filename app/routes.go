@@ -27,7 +27,6 @@ func (a *App) RegisterRoutes() {
 	api.GET("/healthcheck", func(c *gin.Context) {
 		commonsutils.SendResponse(c, commonsmodels.NewResponseSuccess(), http.StatusOK)
 	})
-	api.GET("/parliamentarians/right-wing", a.Parliamentarians.ListRightWing())
-	api.GET("/parliamentarians/right-wing/camara", a.Parliamentarians.ListRightWingCamara())
-	api.GET("/parliamentarians/right-wing/senado", a.Parliamentarians.ListRightWingSenado())
+	api.GET("/parliamentarians/deputies", a.Parliamentarians.ListCamara())
+	api.GET("/parliamentarians/senators", a.Parliamentarians.ListSenado())
 }

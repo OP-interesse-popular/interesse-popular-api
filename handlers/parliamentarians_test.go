@@ -44,3 +44,19 @@ func TestFilterByStates(t *testing.T) {
 		t.Fatalf("items = %#v", result)
 	}
 }
+
+func TestFilterByPartyDirections(t *testing.T) {
+	items := []models.Parliamentarian{{Name: "A", PartyDirection: "direita"}, {Name: "B", PartyDirection: "esquerda"}}
+	result := filterByPartyDirections(items, []string{"direita"})
+	if len(result) != 1 || result[0].Name != "A" {
+		t.Fatalf("items = %#v", result)
+	}
+}
+
+func TestFilterByPartyIdeologies(t *testing.T) {
+	items := []models.Parliamentarian{{Name: "A", PartyIdeology: "direita_liberal"}, {Name: "B", PartyIdeology: "esquerda_liberal"}}
+	result := filterByPartyIdeologies(items, []string{"direita_liberal, extrema_direita"})
+	if len(result) != 1 || result[0].Name != "A" {
+		t.Fatalf("items = %#v", result)
+	}
+}

@@ -23,14 +23,20 @@ func NewParliamentarians(service *services.Parliamentarians) *Parliamentarians {
 	return &Parliamentarians{service: service}
 }
 
-func (h *Parliamentarians) ListRightWing() gin.HandlerFunc {
-	return h.list(h.service.ListRightWing)
+func (h *Parliamentarians) ListCamara() gin.HandlerFunc {
+	return h.list(h.service.ListCamara)
 }
-func (h *Parliamentarians) ListRightWingCamara() gin.HandlerFunc {
-	return h.list(h.service.ListRightWingCamara)
-}
-func (h *Parliamentarians) ListRightWingSenado() gin.HandlerFunc {
-	return h.list(h.service.ListRightWingSenado)
+func (h *Parliamentarians) ListSenado() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		parliamentarians, err := h.service.ListSenado(c.Request.Context())
+		if err != nil {
+			h.sendListError(c, err)
+			return
+		}
+		parliamentarians = applyFilters(c, parliamentarians)
+		slog.Info("parliamentarians retrieved", "house", "senate", "count", len(parliamentarians))
+		commonsutils.SendResponse(c, commonsmodels.ResponseList[models.Parliamentarian]{Items: parliamentarians, Total: len(parliamentarians)}, http.StatusOK)
+	}
 }
 
 func (h *Parliamentarians) list(listParliamentarians func(context.Context) ([]models.Parliamentarian, error)) gin.HandlerFunc {
@@ -44,20 +50,30 @@ func (h *Parliamentarians) list(listParliamentarians func(context.Context) ([]mo
 
 		parliamentarians, err := listParliamentarians(c.Request.Context())
 		if err != nil {
-			slog.Error("unable to retrieve right-wing parliamentarians",
-				"error", err,
-				"method", c.Request.Method,
-				"path", c.FullPath(),
-			)
-			commonsutils.SendErrorResponse(c, commonserrors.NewApiError(http.StatusBadGateway, commonserrors.InternalServerError(err.Error())))
+			h.sendListError(c, err)
 			return
 		}
 
-		parliamentarians = filterByParties(parliamentarians, c.QueryArray("party"))
-		parliamentarians = filterByStates(parliamentarians, c.QueryArray("state"))
-		slog.Info("right-wing parliamentarians retrieved", "count", len(parliamentarians))
+		parliamentarians = applyFilters(c, parliamentarians)
+		slog.Info("parliamentarians retrieved", "count", len(parliamentarians))
 		commonsutils.SendResponse(c, paginate(parliamentarians, page, limit), http.StatusOK)
 	}
+}
+
+func (h *Parliamentarians) sendListError(c *gin.Context, err error) {
+	slog.Error("unable to retrieve parliamentarians",
+		"error", err,
+		"method", c.Request.Method,
+		"path", c.FullPath(),
+	)
+	commonsutils.SendErrorResponse(c, commonserrors.NewApiError(http.StatusBadGateway, commonserrors.InternalServerError(err.Error())))
+}
+
+func applyFilters(c *gin.Context, parliamentarians []models.Parliamentarian) []models.Parliamentarian {
+	parliamentarians = filterByParties(parliamentarians, c.QueryArray("party"))
+	parliamentarians = filterByStates(parliamentarians, c.QueryArray("state"))
+	parliamentarians = filterByPartyDirections(parliamentarians, c.QueryArray("direction"))
+	return filterByPartyIdeologies(parliamentarians, c.QueryArray("ideology"))
 }
 
 func parliamentariansQueryLimit(c *gin.Context) int32 {
@@ -114,6 +130,46 @@ func filterByStates(items []models.Parliamentarian, values []string) []models.Pa
 		}
 	}
 	return filtered
+}
+
+func filterByPartyDirections(items []models.Parliamentarian, values []string) []models.Parliamentarian {
+	directions := queryValues(values)
+	if len(directions) == 0 {
+		return items
+	}
+	filtered := make([]models.Parliamentarian, 0)
+	for _, item := range items {
+		if _, ok := directions[strings.ToLower(strings.TrimSpace(item.PartyDirection))]; ok {
+			filtered = append(filtered, item)
+		}
+	}
+	return filtered
+}
+
+func filterByPartyIdeologies(items []models.Parliamentarian, values []string) []models.Parliamentarian {
+	ideologies := queryValues(values)
+	if len(ideologies) == 0 {
+		return items
+	}
+	filtered := make([]models.Parliamentarian, 0)
+	for _, item := range items {
+		if _, ok := ideologies[strings.ToLower(strings.TrimSpace(item.PartyIdeology))]; ok {
+			filtered = append(filtered, item)
+		}
+	}
+	return filtered
+}
+
+func queryValues(values []string) map[string]struct{} {
+	result := make(map[string]struct{})
+	for _, value := range values {
+		for _, item := range strings.Split(value, ",") {
+			if item = strings.ToLower(strings.TrimSpace(item)); item != "" {
+				result[item] = struct{}{}
+			}
+		}
+	}
+	return result
 }
 
 func paginate(items []models.Parliamentarian, page, limit int32) commonsmodels.PaginatedResponse[models.Parliamentarian] {
