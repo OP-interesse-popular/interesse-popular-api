@@ -29,4 +29,5 @@ func (a *App) RegisterRoutes() {
 	})
 	api.GET("/parliamentarians/deputies", a.Parliamentarians.ListCamara())
 	api.GET("/parliamentarians/senators", a.Parliamentarians.ListSenado())
+	api.GET("/politicians", a.Politicians.List())
 }

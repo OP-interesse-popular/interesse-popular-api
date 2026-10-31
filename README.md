@@ -40,6 +40,30 @@ Também há rotas separadas por casa legislativa:
 Deputados retornam uma resposta paginada. Senadores retornam todos os itens em uma
 única lista (`items` e `total`), pois a casa tem quantidade fixa e pequena de vagas.
 
+## Políticos
+
+`GET /api/v1/politicians` lista uma pessoa por item e inclui todos os seus mandatos
+federais conhecidos. A rota usa `opip:politicians:v1`, a projeção produzida pela API
+interna, e é paginada (`page`, `limit`; padrão 30, máximo 100).
+
+Filtros disponíveis: `q` (nome), `party`, `state`, `house` (`camara` ou `senado`),
+`office` (`deputado_federal` ou `senador`), `status` (`active`, `elected_pending`
+ou `former`), `electionYear`, `direction`, `ideology` e `inOffice` (`true` ou
+`false`). Os filtros de mandato são avaliados juntos no mesmo mandato; valores
+múltiplos podem ser passados separados por vírgula ou repetindo o parâmetro. Direção
+e ideologia são a classificação editorial vigente do partido associada ao mandato.
+
+Ordenação: `sort=name|startsAt|endsAt` e `order=asc|desc`. Para datas, é usada a
+data mais recente conhecida entre os mandatos da pessoa.
+
+Exemplos:
+
+```text
+/api/v1/politicians?party=PL&state=SP&inOffice=true&page=1&limit=20
+/api/v1/politicians?status=elected_pending&house=camara
+/api/v1/politicians?q=Jones
+```
+
 ## Logs
 
 Além dos logs de acesso do Gin, falhas de leitura do Redis são emitidas em JSON sem
